@@ -1,4 +1,4 @@
-# 🧱 Voxel Portfolio — a 3D Minecraft-style world
+# 🧱 Ritam's  Voxel Portfolio — a 3D Minecraft-style world
 
 A real-time 3D (WebGL) portfolio you walk through in third person. A rotating
 Earth on the title screen **dives** you down into a huge forested world, you
