@@ -1,0 +1,6 @@
+# Ritam Koley — Voxel Portfolio. Open to all search engines.
+User-agent: *
+Allow: /
+
+# Once deployed to your domain, you can add:
+# Sitemap: https://your-domain.com/sitemap.xml

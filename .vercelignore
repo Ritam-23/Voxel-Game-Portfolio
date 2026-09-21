@@ -1,0 +1,8 @@
+# keep the deploy lean — these are dev-only, never served to visitors
+.claude
+README.md
+emailjs-test.html
+_refimg
+ref1.png
+ref2.png
+ref3.png

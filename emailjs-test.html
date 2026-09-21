@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EmailJS Diagnostic — Ritam Koley Portfolio</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #0e1424; color: #e7eefc; line-height: 1.5; }
+  .wrap { max-width: 620px; margin: 0 auto; padding: 24px 18px 60px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #93a4c4; font-size: 13px; margin: 0 0 20px; }
+  .card { background: #17203a; border: 1px solid #263354; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  label { display: block; font-size: 12px; color: #9fb0d0; margin: 10px 0 4px; }
+  input, textarea, select { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid #33436b; background: #0f1830; color: #e7eefc; font: inherit; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid #ffd23f66; border-color: #ffd23f; }
+  .keys { display: grid; grid-template-columns: 1fr; gap: 4px; }
+  .keys code { font-size: 12px; color: #ffd88a; word-break: break-all; }
+  button { margin-top: 16px; width: 100%; padding: 12px; border: 0; border-radius: 8px; background: #ffd23f; color: #201b0a; font-weight: 700; font-size: 15px; cursor: pointer; }
+  button:disabled { opacity: .55; cursor: default; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  #log { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-word; background: #0b1120; border: 1px solid #263354; border-radius: 8px; padding: 12px; min-height: 90px; margin-top: 8px; }
+  .ok { color: #6ee7a0; } .err { color: #ff8a8a; } .info { color: #8fb8ff; } .warn { color: #ffcf6b; }
+  .hint { font-size: 12px; color: #93a4c4; margin-top: 10px; }
+  .hint b { color: #cdd9f0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📮 EmailJS Diagnostic</h1>
+  <p class="sub">Standalone test for the portfolio's contact credentials. Fill the form, hit send, and watch the log — it prints the exact SDK response or error.</p>
+
+  <div class="card">
+    <div class="keys">
+      <div>Service ID: <code id="k-service"></code></div>
+      <div>Template ID: <code id="k-template"></code></div>
+      <div>Public key: <code id="k-public"></code></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div><label for="f-name">Name</label><input id="f-name" value="Diagnostic Test" /></div>
+      <div><label for="f-email">Email</label><input id="f-email" type="email" value="test@example.com" /></div>
+    </div>
+    <div class="row">
+      <div><label for="f-phone">Phone</label><input id="f-phone" value="—" /></div>
+      <div><label for="f-topic">Topic</label>
+        <select id="f-topic"><option>Job opportunity</option><option>Internship</option><option>Collaboration</option><option selected>Just saying hi</option></select>
+      </div>
+    </div>
+    <label for="f-message">Message</label>
+    <textarea id="f-message" rows="3">Hello from the standalone EmailJS diagnostic page.</textarea>
+    <button id="send">Send test email</button>
+    <div id="log">Ready. The SDK will load on first send.</div>
+    <p class="hint">If this succeeds but no email arrives, the problem is in your EmailJS <b>template</b> or <b>service</b> settings (e.g. the template's <b>To&nbsp;Email</b> field, or a disconnected mail service), not the code. This page sends every common variable name (<code>name</code>, <code>from_name</code>, <code>reply_to</code>, <code>message</code>, …) so any template binding will be filled.</p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  const K = (window.CONFIG && CONFIG.contact) || {};
+  const SERVICE = K.EMAILJS_SERVICE_ID, TEMPLATE = K.EMAILJS_TEMPLATE_ID, PUBLIC = K.EMAILJS_PUBLIC_KEY;
+  document.getElementById("k-service").textContent = SERVICE || "(missing)";
+  document.getElementById("k-template").textContent = TEMPLATE || "(missing)";
+  document.getElementById("k-public").textContent = PUBLIC || "(missing)";
+
+  const logEl = document.getElementById("log");
+  const stamp = () => new Date().toLocaleTimeString();
+  function log(msg, cls = "info") { logEl.innerHTML += `\n<span class="${cls}">[${stamp()}] ${msg}</span>`; logEl.scrollTop = logEl.scrollHeight; }
+
+  let inited = false;
+  function ensureInit() {
+    if (inited) return true;
+    if (!window.emailjs) { log("EmailJS SDK failed to load (CDN blocked?).", "err"); return false; }
+    try { emailjs.init({ publicKey: PUBLIC }); inited = true; log("SDK loaded and initialised with public key.", "ok"); return true; }
+    catch (e) { log("init() threw: " + e.message, "err"); return false; }
+  }
+
+  document.getElementById("send").addEventListener("click", async () => {
+    const btn = document.getElementById("send");
+    logEl.textContent = "Starting…";
+    if (!SERVICE || !TEMPLATE || !PUBLIC) { log("One or more credentials missing in config.js.", "err"); return; }
+    if (!ensureInit()) return;
+
+    const g = id => document.getElementById(id).value.trim();
+    const name = g("f-name"), email = g("f-email"), phone = g("f-phone"), topic = g("f-topic"), message = g("f-message");
+    // send both the app's variable names AND EmailJS default-template names, so whatever the template uses is populated
+    const params = {
+      name, email, phone, topic, message, time: new Date().toLocaleString(),
+      from_name: name, from_email: email, reply_to: email,
+      to_name: "Ritam Koley", title: `[Portfolio] ${topic}`, subject: `[Portfolio] ${topic} — ${name}`,
+    };
+    log("Sending with params: " + JSON.stringify(params), "info");
+    btn.disabled = true; btn.textContent = "Sending…";
+    try {
+      const res = await emailjs.send(SERVICE, TEMPLATE, params);
+      log(`SUCCESS — status ${res.status} ${res.text}`, "ok");
+      log("The API accepted the send. Check the inbox connected to your EmailJS service.", "ok");
+    } catch (e) {
+      const detail = (e && (e.text || e.message)) || String(e);
+      const status = e && e.status;
+      log(`FAILED — status ${status || "?"}: ${detail}`, "err");
+      if (status === 400) log("400 usually = template variable / parameter problem, or the template's To-Email is empty.", "warn");
+      if (status === 401 || status === 403) log("401/403 = public key wrong, or the domain isn't in EmailJS → Account → Security → Allowed Origins. Add your site's domain (and localhost for local testing).", "warn");
+      if (status === 404) log("404 = service_id or template_id not found on this account.", "warn");
+      if (status === 412) log("412 = the connected mail service needs reconnecting in the EmailJS dashboard.", "warn");
+    } finally {
+      btn.disabled = false; btn.textContent = "Send test email";
+    }
+  });
+</script>
+</body>
+</html>

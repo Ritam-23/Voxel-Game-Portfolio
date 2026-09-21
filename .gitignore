@@ -1,0 +1,9 @@
+# Vercel
+.vercel/
+
+# Local dev / editor
+.claude/
+.DS_Store
+Thumbs.db
+node_modules/
+*.log

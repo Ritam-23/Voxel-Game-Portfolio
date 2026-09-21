@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ritam Koley — CS Undergrad · Voxel Portfolio</title>
+
+  <!-- ============ SEO ============ -->
+  <meta name="description" content="Ritam Koley — Computer Science undergrad at NIT Durgapur, competitive programmer, and security & AI enthusiast. An interactive 3D voxel portfolio: explore my about, experience, projects, technologies, interests, contact and download my résumé." />
+  <meta name="keywords" content="Ritam Koley, portfolio, competitive programming, cybersecurity, machine learning, NIT Durgapur, projects, resume, three.js, 3d portfolio" />
+  <meta name="author" content="Ritam Koley" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#8fd4ff" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Ritam Koley — Voxel Portfolio" />
+  <meta property="og:description" content="Explore my work in an interactive 3D world. About · Experience · Projects · Technologies · Interests · Contact · Résumé." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Ritam Koley — Voxel Portfolio" />
+  <meta name="twitter:description" content="An interactive 3D voxel portfolio built with Three.js." />
+  <link rel="canonical" href="/" />
+  <script type="application/ld+json">
+  { "@context": "https://schema.org", "@type": "Person", "name": "Ritam Koley",
+    "jobTitle": "Computer Science Undergraduate", "url": "/",
+    "sameAs": ["https://github.com/Ritam-23", "https://www.linkedin.com/in/ritam-koley-2005rk3004/"] }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- boot gate: shown until the world is ready (inlined so it paints instantly, even on slow networks) -->
+  <style>
+    #boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#0e1424;color:#cfe4ff;font-family:'Pixelify Sans',monospace;transition:opacity .5s ease}
+    #boot.gone{opacity:0;pointer-events:none}
+    #boot .bl{width:44px;height:44px;background:#5aa73a;box-shadow:0 6px 0 #3f7a2a;animation:bootspin 1.1s steps(4) infinite;will-change:transform}
+    #boot .bt{font-size:15px;font-weight:600;letter-spacing:2px;opacity:.9}
+    #boot .bb{width:200px;height:10px;border:2px solid #2a3550;background:#141d33;border-radius:6px;overflow:hidden}
+    #boot .bbf{height:100%;width:34%;background:#5aa73a;border-radius:4px;animation:bootbar 1.3s ease-in-out infinite;will-change:transform}
+    @keyframes bootspin{to{transform:rotate(90deg)}}
+    @keyframes bootbar{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+    @media (prefers-reduced-motion: reduce){#boot .bl,#boot .bbf{animation:none}#boot .bbf{width:100%}}
+  </style>
+</head>
+<body>
+  <!-- loading gate (removed by game.js once the scene is live) -->
+  <div id="boot"><div class="bl"></div><div class="bt">LOADING WORLD…</div><div class="bb"><div class="bbf"></div></div></div>
+
+  <!-- crawlable content (hidden visually; real text for search engines) -->
+  <main class="seo" aria-hidden="false">
+    <h1>Ritam Koley — Computer Science Undergraduate</h1>
+    <p>Interactive 3D voxel portfolio. Sections: About, Experience, Projects, Technologies, Interests, Contact, and a downloadable résumé.</p>
+    <nav><a href="assets/resume.pdf">Download résumé (PDF)</a></nav>
+  </main>
+  <noscript><div class="ns">This portfolio is an interactive 3D experience that needs JavaScript. You can still <a href="assets/resume.pdf">download my résumé (PDF)</a>.</div></noscript>
+
+  <canvas id="game"></canvas>
+
+  <!-- cinematic overlays -->
+  <div id="vignette"></div>
+  <div id="dmg"></div>
+  <div id="flash"></div>
+  <div id="letterbox"><div class="bar top"></div><div class="bar bottom"></div></div>
+
+  <!-- top navbar (controls always visible) -->
+  <header id="navbar">
+    <div class="nb-brand">🌍 <span id="nb-name">Ritam Koley</span></div>
+    <nav class="nb-controls">
+      <span class="ctrl"><b>Move</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+      <span class="ctrl"><b>Look</b> <kbd>Mouse</kbd></span>
+      <span class="ctrl"><b>Jump</b> <kbd>Space</kbd></span>
+      <span class="ctrl"><b>Attack</b> <kbd>X</kbd></span>
+      <span class="ctrl"><b>Weapon</b> <kbd>1</kbd><kbd>2</kbd></span>
+      <span class="ctrl"><b>Open</b> <kbd>E</kbd></span>
+      <span class="ctrl"><b>Music</b> <kbd>M</kbd></span>
+      <span class="ctrl"><b>Cursor</b> <kbd>Esc</kbd><kbd>Scroll</kbd></span>
+    </nav>
+    <div class="nb-right">
+      <div class="nb-weapon">⚔ <span id="weapon-name">Sword</span></div>
+      <button id="mute" class="nb-mute" type="button" aria-label="Mute music">🎵</button>
+    </div>
+  </header>
+
+  <div id="labels"></div>
+  <div id="hearts"></div>
+  <div id="complete">🏆 You explored the whole world. Thanks for visiting!</div>
+
+  <!-- touch controls -->
+  <div id="touch">
+    <div id="stick"><div id="knob"></div></div>
+    <button id="attack" aria-label="Attack">⚔</button>
+    <button id="jump" aria-label="Jump">⤒</button>
+    <button id="act" aria-label="Interact">E</button>
+  </div>
+
+  <!-- section hotbar -->
+  <div id="hud"><div id="hotbar"></div></div>
+
+  <!-- panel overlay -->
+  <div id="overlay"></div>
+
+  <!-- in-page résumé viewer -->
+  <div id="resume-viewer">
+    <div class="rv-bar"><span class="rv-title">📄 Résumé</span><a id="rv-dl" href="assets/resume.pdf" download>⬇ Download</a><button id="rv-close" aria-label="Close">✕</button></div>
+    <iframe id="resume-frame" title="Résumé"></iframe>
+  </div>
+
+  <!-- ===== TITLE ===== -->
+  <div id="screen-title" class="screen">
+    <div class="s-inner">
+      <div id="globe-wrap">
+        <canvas id="earth-canvas"></canvas>
+        <div id="globe"><div class="globe-map"></div><div class="globe-clouds"></div><div class="globe-shade"></div><div class="globe-atmo"></div></div>
+      </div>
+      <div class="badge">▚ VOXEL PORTFOLIO ▚</div>
+      <h1 id="p-name">Ritam Koley</h1>
+      <p id="p-role" class="role">CS Undergrad · Competitive Programmer · Security &amp; AI</p>
+      <p id="p-tagline" class="tagline">Pick a hero and explore my world.</p>
+      <div class="name-field"><label for="player-name">Your name</label>
+        <input id="player-name" type="text" maxlength="24" placeholder="Enter your name" autocomplete="off" aria-required="true" />
+        <p id="name-err" class="name-err" role="alert" hidden>Please enter your name to continue.</p></div>
+      <button id="btn-enter" class="btn">▶ ENTER WORLD</button>
+      <p class="mini">A little 3D world about me</p>
+    </div>
+  </div>
+
+  <!-- ===== CHARACTER SELECT ===== -->
+  <div id="screen-select" class="screen">
+    <div class="s-inner">
+      <h2 class="sel-h">Choose your hero</h2>
+      <div class="heroes">
+        <div class="hero-card sel" data-kind="he"><canvas id="av-he"></canvas><div class="h-name" id="name-he">Steve</div><div class="h-sub">He / Him</div></div>
+        <div class="hero-card" data-kind="she"><canvas id="av-she"></canvas><div class="h-name" id="name-she">Alex</div><div class="h-sub">She / Her</div></div>
+      </div>
+      <button id="btn-start" class="btn">START ADVENTURE</button>
+    </div>
+  </div>
+
+  <!-- ===== WELCOME SPLASH (after entering a name, before character select) ===== -->
+  <div id="screen-welcome" class="screen welcome">
+    <div class="s-inner"><h1 class="welcome-h">WELCOME</h1><p class="welcome-sub">Choose your hero…</p></div>
+  </div>
+
+  <!-- ===== GAME OVER ===== -->
+  <div id="screen-over" class="screen over">
+    <div class="s-inner">
+      <div class="skull">💀</div>
+      <h1 class="over-h">GAME OVER</h1>
+      <p class="over-sub">The mobs got you. Ready for another run?</p>
+      <div class="name-field"><label for="over-name">Your name</label>
+        <input id="over-name" type="text" maxlength="24" placeholder="Enter your name" autocomplete="off" /></div>
+      <button id="btn-reload" class="btn">⟳ RELOAD &amp; PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- fallback CDN if the primary is blocked / slow -->
+  <script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');</script>
+  <script src="js/cursor.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/textures.js"></script>
+  <script src="js/voxel.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/mobs.js"></script>
+  <script src="js/globe.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
