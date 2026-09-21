@@ -357,6 +357,12 @@ kbd { font-family: var(--pixel); font-size: .62em; background: #2a2733; color: #
   .slot { width: 52px; height: 54px; } .slot-label { font-size: 7.5px; }
   .facts, .techgroups { grid-template-columns: 1fr; }
   #hint { display: none; }
-  #act { width: 68px; height: 68px; } #jump { width: 58px; height: 58px; bottom: 140px; }
+  .nb-controls { display: none; }                     /* keyboard hints useless on touch — hide, use on-screen controls */
+
+  /* lift the action cluster clear above the hotbar and arrange it as a tidy triangle */
+  #act    { width: 60px; height: 60px; right: 18px;  bottom: 104px; font-size: 17px; }
+  #attack { width: 60px; height: 60px; right: 88px;  bottom: 104px; }
+  #jump   { width: 60px; height: 60px; right: 53px;  bottom: 172px; font-size: 18px; }
+
   #hearts { top: auto; bottom: 92px; }               /* navbar wraps tall on mobile — keep hearts clear */
 }
