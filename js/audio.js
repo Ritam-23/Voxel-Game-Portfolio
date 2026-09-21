@@ -10,7 +10,7 @@ window.Music = (() => {
   const SRC = "assets/music.mp3";
   const VOL = 0.4;                                      // gentle background level
   const KEY = "voxel-music-muted";                     // fresh key: a stale mute from earlier builds can't silence it
-  let audio = null, muted = false, raf = 0;
+  let audio = null, muted = false, raf = 0, suspended = false;
   try { muted = localStorage.getItem(KEY) === "1"; } catch (_) {}
 
   function ensure() {
@@ -43,6 +43,22 @@ window.Music = (() => {
   }
   const start = ensurePlaying;                          // explicit entry point for the ENTER/START buttons
   const isPlaying = () => !!audio && !audio.paused;
+  // Stop sound the instant the page leaves the foreground (tab switch, back, close, in-app browser
+  // dismiss). Pause HARD & immediately — no fade — because the browser may freeze JS right after,
+  // leaving a fade half-done and audio still playing. `suspended` marks that WE paused it (vs a real
+  // user mute) so we can resume once the page comes back and the visitor hadn't muted.
+  function suspend() {
+    if (!audio || audio.paused) return;
+    cancelAnimationFrame(raf);
+    audio.pause();
+    audio.volume = 0;
+    suspended = true;
+  }
+  function resume() {
+    if (!suspended) return;
+    suspended = false;
+    ensurePlaying();                                    // no-ops if muted
+  }
   function setMuted(m) {
     muted = m;
     try { localStorage.setItem(KEY, m ? "1" : "0"); } catch (_) {}
@@ -73,8 +89,16 @@ window.Music = (() => {
     // retry on EVERY gesture until it's actually playing (kept attached — cheap no-op once playing)
     const kick = () => ensurePlaying();
     ["pointerdown", "keydown", "touchstart", "click"].forEach(ev => addEventListener(ev, kick, { passive: true }));
-    // if the tab was hidden then shown again, make sure it's still going
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) ensurePlaying(); });
+    // Silence when the page leaves the foreground; pick it back up when it returns.
+    // These cover every device/exit path: tab switch & lock (visibilitychange), navigation/close
+    // and bfcache stash (pagehide), phone/OS tab freeze (freeze), and blur for stubborn in-app
+    // browsers (WhatsApp/Instagram) that don't reliably fire visibilitychange on dismiss.
+    document.addEventListener("visibilitychange", () => { document.hidden ? suspend() : resume(); });
+    addEventListener("pagehide", suspend);
+    addEventListener("freeze", suspend);
+    addEventListener("blur", () => { if (document.hidden) suspend(); });
+    addEventListener("pageshow", resume);               // returning from bfcache
+    addEventListener("focus", resume);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 
